@@ -50,25 +50,6 @@ class Song():
     def stop(self, fin=True):
         self._send("q")
 
-    def next(self):
-        self.stop(False)
-        self._index += 1
-        if len(self.songs) <= self._index:
-            self._fin = True
-            raise EOS("End of List")
-        self.play_this()
-
-    def prev(self):
-        self.stop(False)
-        self._index -= 1
-        self.play_this()
-
-    def random(self):
-        random.shuffle(self._song_list)
-
-    def lineal(self):
-        self._song_list = self.songs.copy()
-
     def set_volume(self, vol):
         vol_now, self._vol = self._vol, vol
         while vol_now != vol:
@@ -101,8 +82,16 @@ class Song():
 
 
 class Player():
-    pass
+    def __init__(self):
+        self._paths = list()
+        self.include_path(os.path.normpath("~/Music"))
 
+    def include_path(self, path):
+        self._paths.append(path)
+
+    def remove_path(self, path):
+        if path in self._paths:
+            self._paths.remove(path)
    
 
 if __name__ == "__main__":
