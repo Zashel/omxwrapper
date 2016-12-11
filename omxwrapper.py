@@ -38,16 +38,25 @@ class Song():
     def status(self):
         return self._status
 
-    def play(self):
+    def play(self, pos):
         self._process = subprocess.Popen(
-                ["omxplayer", self._path, "--amp", str(self._vol*300), "--no-osd"],
+                ["omxplayer", self._path,
+                    "--amp", str(self._vol*300),
+                    "--no-osd",
+                    "--pos", pos],
                 stdout = subprocess.PIPE, stdin = subprocess.PIPE)
         self._set_status(Song.Status.PLAYING)
 
     def pause(self):
         self._send("p")
 
-    def stop(self, fin=True):
+    def next(self): #For CD compatibility
+        self.stop()
+
+    def prev(self):
+        self.stop()
+
+    def stop(self):
         self._send("q")
 
     def set_volume(self, vol):
@@ -80,18 +89,39 @@ class Song():
         assert isinstance(status, Song.Status)
         self._status = status
 
+class CD(Song):
+    pass #TODO
+
 
 class Player():
-    def __init__(self):
-        self._paths = list()
-        self.include_path(os.path.normpath("~/Music"))
+    def __init__(self, paths=None):
+        if paths is None:
+            self._paths = list()
+            self.include_path(os.path.normpath("~/Music"))
+        else:
+            self._paths = paths
+        self.update_songs()
 
     def include_path(self, path):
         self._paths.append(path)
+        self.update_songs()
 
     def remove_path(self, path):
         if path in self._paths:
             self._paths.remove(path)
+        self.update_songs()
+
+    def update_songs(self):
+        def songify(song):
+            if song.split(".")[-1] == "mp3":
+                return Song(song)
+            elif song.split(".")[-1] in ("flac", "iso"):
+                return CD(song)
+
+        self._songs = [
+            [songify(song) for song in os.listdir(path)]
+            for path in self._paths
+            ]
    
 
 if __name__ == "__main__":
